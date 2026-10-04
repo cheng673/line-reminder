@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum ReminderStatus {
+  PENDING
+  PROCESSING
+  SENT
+  FAILED
+}
+
+model Reminder {
+  id         String         @id @default(cuid())
+  message    String         @db.VarChar(500)
+  scheduledAt DateTime      @map("scheduled_at")
+  recipientName String       @default("我的 LINE") @map("recipient_name")
+  lineUserId String         @map("line_user_id")
+  status     ReminderStatus @default(PENDING)
+  createdAt  DateTime       @default(now()) @map("created_at")
+  processingAt DateTime?    @map("processing_at")
+  sentAt     DateTime?      @map("sent_at")
+  error      String?        @db.Text
+
+  @@index([status, scheduledAt])
+  @@map("reminders")
+}
+
+model LineRecipient {
+  lineUserId  String   @id @map("line_user_id")
+  displayName String   @default("我的 LINE") @map("display_name")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("line_recipients")
+}
