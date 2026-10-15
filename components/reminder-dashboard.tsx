@@ -10,6 +10,20 @@ const statusText: Record<ReminderStatus, string> = {
   failed: "發送失敗",
 };
 
+function taipeiToday() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Taipei", year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return `${get("year")}-${get("month")}-${get("day")}`;
+}
+
+function taipeiTodayLabel() {
+  return new Intl.DateTimeFormat("zh-TW", {
+    timeZone: "Asia/Taipei", year: "numeric", month: "long", day: "numeric", weekday: "long",
+  }).format(new Date());
+}
+
 function dateTimeParts(value: string) {
   const date = new Date(value);
   return {
@@ -37,7 +51,7 @@ async function requestJson<T>(url: string, options?: RequestInit): Promise<T> {
 
 export function ReminderDashboard() {
   const [message, setMessage] = useState("");
-  const [date, setDate] = useState("2026-10-05");
+  const [date, setDate] = useState(taipeiToday);
   const [time, setTime] = useState("07:30");
   const [recipient, setRecipient] = useState("");
   const [reminders, setReminders] = useState<Reminder[]>([]);
@@ -65,7 +79,7 @@ export function ReminderDashboard() {
 
   function clearForm() {
     setMessage("");
-    setDate("2026-10-05");
+    setDate(taipeiToday());
     setTime("07:30");
     setRecipient(recipients[0]?.lineUserId || "");
     setEditingId(null);
@@ -138,7 +152,7 @@ export function ReminderDashboard() {
           <span className="brand-mark">✓</span>
           <span>提醒一下</span>
         </a>
-        <span className="phase-chip">MVP · 本機預覽</span>
+        <span className="phase-chip">今天 · {taipeiTodayLabel()}</span>
       </header>
 
       <section className="hero" id="top">
@@ -155,7 +169,7 @@ export function ReminderDashboard() {
               <h2>{editingId ? "編輯提醒" : "建立提醒"}</h2>
             </div>
             {editingId && (
-            <button type="button" className="text-button" onClick={clearForm} disabled={isSaving}>取消編輯</button>
+              <button type="button" className="text-button" onClick={clearForm} disabled={isSaving}>取消編輯</button>
             )}
           </div>
 
