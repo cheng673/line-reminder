@@ -9,6 +9,7 @@ export const runtime = "nodejs";
 
 const BATCH_SIZE = 50;
 const PROCESSING_TIMEOUT_MS = 15 * 60 * 1000;
+const SENT_RETENTION_MS = 24 * 60 * 60 * 1000;
 
 type ClaimedReminder = {
   id: string;
@@ -30,8 +31,15 @@ export async function POST(request: Request) {
   if (!isAuthorized(request)) {
     return NextResponse.json({ error: "未授權的排程請求。" }, { status: 401 });
   }
+
+  // Retain a successful reminder for 24 hours, then remove only that completed
+  // record. Pending, failed, and currently processing reminders are preserved.
+  const expired = await prisma.reminder.deleteMany({
+    where: { status: "SENT", sentAt: { lt: new Date(Date.now() - SENT_RETENTION_MS) } },
+  });
+
   if (!isLineConfigured()) {
-    return NextResponse.json({ error: "LINE_CHANNEL_ACCESS_TOKEN 尚未設定；沒有處理任何提醒。" }, { status: 503 });
+    return NextResponse.json({ error: "LINE_CHANNEL_ACCESS_TOKEN 尚未設定；沒有處理任何提醒。", expiredDeleted: expired.count }, { status: 503 });
   }
 
   // A server crash after claiming a reminder must not leave it permanently stuck.
@@ -80,5 +88,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ claimed: claimed.length, sent, failed, recovered: recovered.count });
+  return NextResponse.json({ claimed: claimed.length, sent, failed, recovered: recovered.count, expiredDeleted: expired.count });
 }

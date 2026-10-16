@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { serializeReminder, validateReminderPayload } from "@/lib/reminders";
+import { getCurrentUser } from "@/lib/auth";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PATCH(request: Request, { params }: RouteContext) {
   try {
+    if (!(await getCurrentUser())) return NextResponse.json({ error: "請先解鎖提醒。" }, { status: 401 });
     const result = validateReminderPayload(await request.json());
     if ("error" in result) return NextResponse.json(result, { status: 400 });
 
@@ -34,6 +36,7 @@ export async function PATCH(request: Request, { params }: RouteContext) {
 
 export async function DELETE(_: Request, { params }: RouteContext) {
   try {
+    if (!(await getCurrentUser())) return NextResponse.json({ error: "請先解鎖提醒。" }, { status: 401 });
     const { id } = await params;
     await prisma.reminder.delete({ where: { id } });
     return new NextResponse(null, { status: 204 });

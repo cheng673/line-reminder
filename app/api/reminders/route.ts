@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { serializeReminder, validateReminderPayload } from "@/lib/reminders";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    if (!(await getCurrentUser())) return NextResponse.json({ error: "請先解鎖提醒。" }, { status: 401 });
     const reminders = await prisma.reminder.findMany({ orderBy: { scheduledAt: "asc" } });
     return NextResponse.json(reminders.map(serializeReminder));
   } catch (error) {
@@ -16,6 +18,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    if (!(await getCurrentUser())) return NextResponse.json({ error: "請先解鎖提醒。" }, { status: 401 });
     const result = validateReminderPayload(await request.json());
     if ("error" in result) return NextResponse.json(result, { status: 400 });
 

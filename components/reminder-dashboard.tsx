@@ -60,6 +60,7 @@ export function ReminderDashboard() {
   const [notice, setNotice] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLocking, setIsLocking] = useState(false);
 
   const pendingCount = useMemo(
     () => reminders.filter((reminder) => reminder.status === "pending").length,
@@ -145,6 +146,16 @@ export function ReminderDashboard() {
     }
   }
 
+  async function lockApp() {
+    setIsLocking(true);
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      window.location.assign("/");
+    } finally {
+      setIsLocking(false);
+    }
+  }
+
   return (
     <main className="shell">
       <header className="topbar">
@@ -152,7 +163,12 @@ export function ReminderDashboard() {
           <span className="brand-mark">✓</span>
           <span>提醒一下</span>
         </a>
-        <span className="phase-chip">今天 · {taipeiTodayLabel()}</span>
+        <div className="topbar-actions">
+          <span className="phase-chip">今天 · {taipeiTodayLabel()}</span>
+          <button className="lock-button" type="button" onClick={lockApp} disabled={isLocking}>
+            {isLocking ? "鎖定中…" : "鎖定"}
+          </button>
+        </div>
       </header>
 
       <section className="hero" id="top">

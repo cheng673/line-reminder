@@ -11,6 +11,7 @@
 - 受 `CRON_SECRET` 保護的到期提醒排程端點（`POST /api/cron/process-reminders`）
 - 已驗證簽名的 LINE webhook（`POST /api/line/webhook`），自動註冊 LINE 收件人
 - LINE 與資料庫的環境變數範本
+- 全站管理密碼：首次設定唯一管理密碼，之後所有裝置皆需輸入同一密碼才能查看或管理提醒
 
 ## 還沒接上的功能
 
@@ -30,6 +31,21 @@ npm run dev
 ```
 
 然後開啟 `http://localhost:3000`。
+
+## 管理密碼設定與部署
+
+首次在網站設定一組至少 12 個字元的管理密碼。密碼不會以明碼儲存，資料庫只會保存加鹽後的不可逆雜湊值；之後手機、電腦與平板都使用同一組密碼登入。
+
+執行資料庫 migration，推送程式碼並讓 Vercel 完成新部署：
+
+```bash
+npm run db:deploy
+git add .
+git commit -m "Add passkey login"
+git push
+```
+
+第一次請直接開啟正式網域，設定管理密碼。因為正式環境與本機若共用同一個資料庫，兩邊會共用這一組管理密碼。
 
 ## 下一階段建議
 
