@@ -36,6 +36,8 @@ export function BottomNavigation() {
   const currentIndex = Math.max(0, items.findIndex((item) => item.href === pathname));
   const [visibleIndex, setVisibleIndex] = useState(currentIndex);
   const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gestureStart = useRef<{ x: number; y: number } | null>(null);
+  const ignoreNextClick = useRef(false);
 
   useEffect(() => {
     setVisibleIndex(currentIndex);
@@ -45,19 +47,52 @@ export function BottomNavigation() {
     if (navigationTimer.current) clearTimeout(navigationTimer.current);
   }, []);
 
-  function navigate(event: React.MouseEvent<HTMLAnchorElement>, href: string, index: number) {
-    if (href === pathname) return;
-    event.preventDefault();
-    setVisibleIndex(index);
+  useEffect(() => {
+    items.forEach((item) => router.prefetch(item.href));
+  }, [router]);
+
+  function moveTo(index: number) {
+    const nextIndex = Math.max(0, Math.min(items.length - 1, index));
+    if (nextIndex === currentIndex) return;
+    setVisibleIndex(nextIndex);
     if (navigationTimer.current) clearTimeout(navigationTimer.current);
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    navigationTimer.current = setTimeout(() => router.push(href), reduceMotion ? 0 : 210);
+    navigationTimer.current = setTimeout(() => router.push(items[nextIndex].href), reduceMotion ? 0 : 120);
+  }
+
+  function navigate(event: React.MouseEvent<HTMLAnchorElement>, href: string, index: number) {
+    if (ignoreNextClick.current) {
+      event.preventDefault();
+      ignoreNextClick.current = false;
+      return;
+    }
+    if (href === pathname) return;
+    event.preventDefault();
+    moveTo(index);
+  }
+
+  function startSwipe(event: React.PointerEvent<HTMLDivElement>) {
+    gestureStart.current = { x: event.clientX, y: event.clientY };
+  }
+
+  function endSwipe(event: React.PointerEvent<HTMLDivElement>) {
+    const start = gestureStart.current;
+    gestureStart.current = null;
+    if (!start) return;
+
+    const horizontalDistance = event.clientX - start.x;
+    const verticalDistance = event.clientY - start.y;
+    if (Math.abs(horizontalDistance) < 28 || Math.abs(horizontalDistance) <= Math.abs(verticalDistance)) return;
+
+    ignoreNextClick.current = true;
+    moveTo(currentIndex + (horizontalDistance < 0 ? 1 : -1));
+    window.setTimeout(() => { ignoreNextClick.current = false; }, 250);
   }
 
   return (
     <nav className="liquid-nav" aria-label="主要導覽">
-      <div className="liquid-nav-list">
+      <div className="liquid-nav-list" onPointerDown={startSwipe} onPointerUp={endSwipe} onPointerCancel={() => { gestureStart.current = null; }}>
         <span
           className="liquid-nav-selection"
           aria-hidden="true"
