@@ -1,6 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
+import { BottomNavigation } from "@/components/bottom-navigation";
 import type { Recipient, Reminder, ReminderStatus } from "@/lib/types";
 
 const statusText: Record<ReminderStatus, string> = {
@@ -66,6 +68,7 @@ export function ReminderDashboard() {
     () => reminders.filter((reminder) => reminder.status === "pending").length,
     [reminders],
   );
+  const recentReminders = useMemo(() => reminders.slice(0, 5), [reminders]);
 
   useEffect(() => {
     Promise.all([requestJson<Reminder[]>("/api/reminders"), requestJson<Recipient[]>("/api/recipients")])
@@ -226,14 +229,14 @@ export function ReminderDashboard() {
           <div className="section-heading">
             <div>
               <p className="eyebrow">UPCOMING</p>
-              <h2>我的提醒</h2>
+              <h2>近期提醒</h2>
             </div>
             <span className="count">{pendingCount} 個待辦</span>
           </div>
 
           <div className="reminder-list">
             {isLoading && <p className="empty">正在讀取提醒…</p>}
-            {!isLoading && reminders.map((reminder) => {
+            {!isLoading && recentReminders.map((reminder) => {
               const when = dateTimeParts(reminder.scheduledAt);
               return (
                 <article className="reminder" key={reminder.id}>
@@ -253,6 +256,7 @@ export function ReminderDashboard() {
               );
             })}
             {!isLoading && reminders.length === 0 && <p className="empty">目前沒有提醒。建立第一個提醒吧！</p>}
+            {!isLoading && reminders.length > recentReminders.length && <Link className="view-all-link" href="/all-reminders">查看全部提醒</Link>}
           </div>
         </section>
       </section>
@@ -261,6 +265,7 @@ export function ReminderDashboard() {
         <span>提醒一下 · 先把重要的事準時送達</span>
         <span>Phase 1：UI 原型</span>
       </footer>
+      <BottomNavigation />
     </main>
   );
 }
