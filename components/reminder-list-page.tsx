@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { BottomNavigation } from "@/components/bottom-navigation";
+import { useMemo } from "react";
+import { useReminderData } from "@/components/reminder-data";
 import type { Reminder, ReminderStatus } from "@/lib/types";
 
 type ReminderListPageProps = { mode: "all" | "mine" };
@@ -22,22 +22,8 @@ function dateTimeParts(value: string) {
 }
 
 export function ReminderListPage({ mode }: ReminderListPageProps) {
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
+  const { reminders, error, isLoading } = useReminderData();
   const isAll = mode === "all";
-
-  useEffect(() => {
-    fetch("/api/reminders")
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok) throw new Error(body?.error || "暫時無法讀取提醒。");
-        return body as Reminder[];
-      })
-      .then(setReminders)
-      .catch((reason: Error) => setError(reason.message))
-      .finally(() => setLoading(false));
-  }, []);
 
   const displayedReminders = useMemo(
     () => (isAll ? reminders : reminders.filter((reminder) => reminder.status !== "sent")),
@@ -61,9 +47,9 @@ export function ReminderListPage({ mode }: ReminderListPageProps) {
       </section>
 
       <section className="list-card reminder-collection" aria-live="polite">
-        {loading && <p className="empty">正在讀取提醒…</p>}
+        {isLoading && <p className="empty">正在讀取提醒…</p>}
         {error && <p className="notice" role="alert">{error}</p>}
-        {!loading && !error && displayedReminders.map((reminder) => {
+        {!isLoading && !error && displayedReminders.map((reminder) => {
           const when = dateTimeParts(reminder.scheduledAt);
           return (
             <article className="reminder" key={reminder.id}>
@@ -75,9 +61,8 @@ export function ReminderListPage({ mode }: ReminderListPageProps) {
             </article>
           );
         })}
-        {!loading && !error && displayedReminders.length === 0 && <p className="empty">目前沒有符合條件的提醒。</p>}
+        {!isLoading && !error && displayedReminders.length === 0 && <p className="empty">目前沒有符合條件的提醒。</p>}
       </section>
-      <BottomNavigation />
     </main>
   );
 }

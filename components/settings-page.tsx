@@ -1,26 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { BottomNavigation } from "@/components/bottom-navigation";
-import type { Recipient } from "@/lib/types";
+import { useState } from "react";
+import { useReminderData } from "@/components/reminder-data";
 
 export function SettingsPage() {
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [notice, setNotice] = useState("");
   const [locking, setLocking] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/recipients")
-      .then(async (response) => {
-        const body = await response.json();
-        if (!response.ok) throw new Error(body?.error || "暫時無法讀取 LINE 收件人。");
-        return body as Recipient[];
-      })
-      .then(setRecipients)
-      .catch((reason: Error) => setNotice(reason.message))
-      .finally(() => setLoading(false));
-  }, []);
+  const { recipients, isLoading, error } = useReminderData();
 
   async function lockApp() {
     setLocking(true);
@@ -51,19 +36,18 @@ export function SettingsPage() {
             <div><p className="eyebrow">LINE RECIPIENTS</p><h2>LINE 收件人</h2></div>
             <span className="count">{recipients.length} 位</span>
           </div>
-          {loading && <p className="empty">正在讀取收件人…</p>}
-          {notice && <p className="notice" role="alert">{notice}</p>}
-          {!loading && !notice && recipients.map((recipient) => (
+          {isLoading && <p className="empty">正在讀取收件人…</p>}
+          {error && <p className="notice" role="alert">{error}</p>}
+          {!isLoading && !error && recipients.map((recipient) => (
             <div className="recipient-row" key={recipient.lineUserId}>
               <span className="recipient-avatar" aria-hidden="true">L</span>
               <span>{recipient.displayName}</span>
               <span className="recipient-status">已連結</span>
             </div>
           ))}
-          {!loading && !notice && recipients.length === 0 && <p className="empty">尚未有 LINE 收件人。將官方帳號加為好友後會自動出現在這裡。</p>}
+          {!isLoading && !error && recipients.length === 0 && <p className="empty">尚未有 LINE 收件人。將官方帳號加為好友後會自動出現在這裡。</p>}
         </article>
       </section>
-      <BottomNavigation />
     </main>
   );
 }

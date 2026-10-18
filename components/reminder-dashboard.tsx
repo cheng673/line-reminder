@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { BottomNavigation } from "@/components/bottom-navigation";
+import { useReminderData } from "@/components/reminder-data";
 import type { Recipient, Reminder, ReminderStatus } from "@/lib/types";
 
 const statusText: Record<ReminderStatus, string> = {
@@ -56,13 +56,11 @@ export function ReminderDashboard() {
   const [date, setDate] = useState(taipeiToday);
   const [time, setTime] = useState("07:30");
   const [recipient, setRecipient] = useState("");
-  const [reminders, setReminders] = useState<Reminder[]>([]);
-  const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isLocking, setIsLocking] = useState(false);
+  const { reminders, recipients, isLoading, error: loadingError, setReminders } = useReminderData();
 
   const pendingCount = useMemo(
     () => reminders.filter((reminder) => reminder.status === "pending").length,
@@ -71,15 +69,8 @@ export function ReminderDashboard() {
   const recentReminders = useMemo(() => reminders.slice(0, 5), [reminders]);
 
   useEffect(() => {
-    Promise.all([requestJson<Reminder[]>("/api/reminders"), requestJson<Recipient[]>("/api/recipients")])
-      .then(([savedReminders, savedRecipients]) => {
-        setReminders(savedReminders);
-        setRecipients(savedRecipients);
-        setRecipient((current) => current || savedRecipients[0]?.lineUserId || "");
-      })
-      .catch((error: Error) => setNotice(error.message))
-      .finally(() => setIsLoading(false));
-  }, []);
+    setRecipient((current) => current || recipients[0]?.lineUserId || "");
+  }, [recipients]);
 
   function clearForm() {
     setMessage("");
@@ -219,7 +210,7 @@ export function ReminderDashboard() {
             <small>加為官方帳號好友後，系統會自動列出你的 LINE。</small>
           </label>
 
-          {notice && <p className="notice" role="status">{notice}</p>}
+          {(notice || loadingError) && <p className="notice" role="status">{notice || loadingError}</p>}
           <button className="primary-button" type="submit" disabled={isSaving}>
             <span>＋</span>{isSaving ? "儲存中…" : editingId ? "儲存變更" : "建立提醒"}
           </button>
@@ -265,7 +256,6 @@ export function ReminderDashboard() {
         <span>提醒一下 · 先把重要的事準時送達</span>
         <span>Phase 1：UI 原型</span>
       </footer>
-      <BottomNavigation />
     </main>
   );
 }

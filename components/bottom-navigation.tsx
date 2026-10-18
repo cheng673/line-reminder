@@ -35,17 +35,12 @@ export function BottomNavigation() {
   const router = useRouter();
   const currentIndex = Math.max(0, items.findIndex((item) => item.href === pathname));
   const [visibleIndex, setVisibleIndex] = useState(currentIndex);
-  const navigationTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const gestureStart = useRef<{ x: number; y: number } | null>(null);
   const ignoreNextClick = useRef(false);
 
   useEffect(() => {
     setVisibleIndex(currentIndex);
   }, [currentIndex]);
-
-  useEffect(() => () => {
-    if (navigationTimer.current) clearTimeout(navigationTimer.current);
-  }, []);
 
   useEffect(() => {
     items.forEach((item) => router.prefetch(item.href));
@@ -55,10 +50,7 @@ export function BottomNavigation() {
     const nextIndex = Math.max(0, Math.min(items.length - 1, index));
     if (nextIndex === currentIndex) return;
     setVisibleIndex(nextIndex);
-    if (navigationTimer.current) clearTimeout(navigationTimer.current);
-
-    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    navigationTimer.current = setTimeout(() => router.push(items[nextIndex].href), reduceMotion ? 0 : 120);
+    router.push(items[nextIndex].href);
   }
 
   function navigate(event: React.MouseEvent<HTMLAnchorElement>, href: string, index: number) {

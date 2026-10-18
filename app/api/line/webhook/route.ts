@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getLineDisplayName } from "@/lib/line";
 
 export const runtime = "nodejs";
 
@@ -48,10 +49,14 @@ export async function POST(request: Request) {
       }
 
       if (event.type === "follow" || event.type === "message") {
+        const displayName = await getLineDisplayName(event.source.userId);
         await prisma.lineRecipient.upsert({
           where: { lineUserId: event.source.userId },
-          create: { lineUserId: event.source.userId, displayName: "我的 LINE" },
-          update: { isActive: true },
+          create: { lineUserId: event.source.userId, displayName: displayName || "我的 LINE" },
+          update: {
+            isActive: true,
+            ...(displayName ? { displayName } : {}),
+          },
         });
       }
     }),
