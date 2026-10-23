@@ -40,6 +40,7 @@ model LineRecipient {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
   userId      String   @map("user_id")
+  passwordHash String? @map("password_hash")
   user        AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([userId, lineUserId])
@@ -77,6 +78,7 @@ model UserSession {
   tokenHash String   @unique @map("token_hash")
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
+  selectedLineUserId String? @map("selected_line_user_id")
   user      AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])

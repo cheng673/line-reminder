@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { useReminderData } from "@/components/reminder-data";
-import type { Recipient, Reminder, ReminderStatus } from "@/lib/types";
+import type { Reminder, ReminderStatus } from "@/lib/types";
 
 const statusText: Record<ReminderStatus, string> = {
   pending: "待發送",
@@ -55,11 +55,10 @@ export function ReminderDashboard() {
   const [message, setMessage] = useState("");
   const [date, setDate] = useState(taipeiToday);
   const [time, setTime] = useState("07:30");
-  const [recipient, setRecipient] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
-  const [isLocking, setIsLocking] = useState(false);
+  const [isSwitchingRecipient, setIsSwitchingRecipient] = useState(false);
   const { reminders, recipients, isLoading, error: loadingError, setReminders } = useReminderData();
 
   const pendingCount = useMemo(
@@ -68,15 +67,10 @@ export function ReminderDashboard() {
   );
   const recentReminders = useMemo(() => reminders.slice(0, 5), [reminders]);
 
-  useEffect(() => {
-    setRecipient((current) => current || recipients[0]?.lineUserId || "");
-  }, [recipients]);
-
   function clearForm() {
     setMessage("");
     setDate(taipeiToday());
     setTime("07:30");
-    setRecipient(recipients[0]?.lineUserId || "");
     setEditingId(null);
   }
 
@@ -87,17 +81,14 @@ export function ReminderDashboard() {
       setNotice("請先輸入提醒內容。");
       return;
     }
-    const selectedRecipient = recipients.find((item) => item.lineUserId === recipient);
-    if (!selectedRecipient) {
-      setNotice("請先到「設定」產生 LINE 綁定碼，並傳送給 LINE 官方帳號。");
+    if (!recipients[0]) {
+      setNotice("請先選擇已綁定的 LINE 收件人。");
       return;
     }
 
     const body = {
       message: trimmedMessage,
       scheduledAt: new Date(`${date}T${time}:00+08:00`).toISOString(),
-      recipientName: selectedRecipient.displayName,
-      lineUserId: selectedRecipient.lineUserId,
     };
     setIsSaving(true);
     try {
@@ -123,7 +114,6 @@ export function ReminderDashboard() {
     setMessage(reminder.message);
     setDate(nextDate);
     setTime(nextTime);
-    setRecipient(reminder.lineUserId);
     setEditingId(reminder.id);
     setNotice("正在編輯提醒。");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -141,12 +131,12 @@ export function ReminderDashboard() {
   }
 
   async function lockApp() {
-    setIsLocking(true);
+    setIsSwitchingRecipient(true);
     try {
       await fetch("/api/auth/logout", { method: "POST" });
       window.location.assign("/");
     } finally {
-      setIsLocking(false);
+      setIsSwitchingRecipient(false);
     }
   }
 
@@ -159,8 +149,8 @@ export function ReminderDashboard() {
         </a>
         <div className="topbar-actions">
           <span className="phase-chip">今天 · {taipeiTodayLabel()}</span>
-          <button className="lock-button" type="button" onClick={lockApp} disabled={isLocking}>
-            {isLocking ? "鎖定中…" : "鎖定"}
+          <button className="lock-button" type="button" onClick={lockApp} disabled={isSwitchingRecipient}>
+            {isSwitchingRecipient ? "切換中…" : "切換對象"}
           </button>
         </div>
       </header>
@@ -199,16 +189,9 @@ export function ReminderDashboard() {
             </label>
           </div>
 
-          <label className="field full">
-            <span>發送給</span>
-            <select value={recipient} onChange={(event) => setRecipient(event.target.value)} disabled={!recipients.length}>
-              {!recipients.length && <option value="">尚未註冊 LINE 收件人</option>}
-              {recipients.map((item) => (
-                <option key={item.lineUserId} value={item.lineUserId}>{item.displayName}</option>
-              ))}
-            </select>
-            <small>請在「設定」使用 LINE 綁定碼連結屬於這個帳號的收件人。</small>
-          </label>
+          <p className="recipient-summary" aria-live="polite">
+            將發送給 <strong>{recipients[0]?.displayName || "尚未選擇 LINE 收件人"}</strong>
+          </p>
 
           {(notice || loadingError) && <p className="notice" role="status">{notice || loadingError}</p>}
           <button className="primary-button" type="submit" disabled={isSaving}>

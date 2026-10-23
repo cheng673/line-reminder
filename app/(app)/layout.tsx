@@ -1,13 +1,13 @@
 import { BottomNavigation } from "@/components/bottom-navigation";
 import { ReminderDataProvider } from "@/components/reminder-data";
-import { UnlockScreen } from "@/components/unlock-screen";
-import { getCurrentUser, hasOwner } from "@/lib/auth";
+import { RecipientPicker } from "@/components/recipient-picker";
+import { getCurrentRecipient } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function AppLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  const [user, passwordExists] = await Promise.all([getCurrentUser(), hasOwner()]);
-  if (!user) return <UnlockScreen setupMode={!passwordExists} />;
+  const access = await getCurrentRecipient();
+  if (!access) return <RecipientPicker />;
 
   return (
     <ReminderDataProvider>

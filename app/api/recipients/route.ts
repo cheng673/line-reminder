@@ -1,16 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentRecipient } from "@/lib/auth";
 import { getLineDisplayName } from "@/lib/line";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    const user = await getCurrentUser();
-    if (!user) return NextResponse.json({ error: "請先登入。" }, { status: 401 });
+    const access = await getCurrentRecipient();
+    if (!access) return NextResponse.json({ error: "請先選擇 LINE 收件人。" }, { status: 401 });
     const recipients = await prisma.lineRecipient.findMany({
-      where: { userId: user.id, isActive: true },
+      where: { userId: access.user.id, lineUserId: access.recipient.lineUserId, isActive: true },
       orderBy: { createdAt: "asc" },
       select: { lineUserId: true, displayName: true },
     });
@@ -26,7 +26,7 @@ export async function GET() {
         if (!displayName) return recipient;
 
         await prisma.lineRecipient.update({
-          where: { userId_lineUserId: { userId: user.id, lineUserId: recipient.lineUserId } },
+          where: { userId_lineUserId: { userId: access.user.id, lineUserId: recipient.lineUserId } },
           data: { displayName },
         });
         return { ...recipient, displayName };

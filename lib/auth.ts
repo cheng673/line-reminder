@@ -53,6 +53,11 @@ export async function hasOwner() {
 }
 
 export async function getCurrentUser() {
+  const session = await getCurrentSession();
+  return session?.user ?? null;
+}
+
+export async function getCurrentSession() {
   const token = (await cookies()).get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
@@ -61,23 +66,39 @@ export async function getCurrentUser() {
     include: { user: true },
   });
 
-  if (!session || !session.user.passwordHash) return null;
+  if (!session) return null;
   if (session.expiresAt <= new Date()) {
     await prisma.userSession.delete({ where: { id: session.id } }).catch(() => undefined);
     return null;
   }
 
-  return session.user;
+  return session;
 }
 
-export async function createSession(userId: string) {
+export async function getCurrentRecipient() {
+  const session = await getCurrentSession();
+  if (!session?.selectedLineUserId) return null;
+
+  const recipient = await prisma.lineRecipient.findUnique({
+    where: {
+      userId_lineUserId: {
+        userId: session.userId,
+        lineUserId: session.selectedLineUserId,
+      },
+    },
+  });
+  if (!recipient?.isActive || !recipient.passwordHash) return null;
+  return { user: session.user, recipient };
+}
+
+export async function createSession(userId: string, selectedLineUserId?: string) {
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + SESSION_DURATION_SECONDS * 1000);
 
   await prisma.$transaction([
     prisma.userSession.deleteMany({ where: { expiresAt: { lt: new Date() } } }),
     prisma.userSession.create({
-      data: { userId, tokenHash: hashToken(token), expiresAt },
+      data: { userId, tokenHash: hashToken(token), expiresAt, selectedLineUserId },
     }),
   ]);
 

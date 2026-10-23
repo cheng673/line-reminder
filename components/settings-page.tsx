@@ -46,9 +46,9 @@ export function SettingsPage() {
       <section className="settings-stack" aria-label="設定內容">
         <article className="settings-card">
           <p className="eyebrow">ACCOUNT</p>
-          <h2>帳號與資料保護</h2>
-          <p>每個帳號都有獨立密碼，提醒與 LINE 收件人只會在登入該帳號後顯示。</p>
-          <button className="settings-action" type="button" onClick={lockApp} disabled={locking}>{locking ? "鎖定中…" : "立即鎖定"}</button>
+          <h2>切換提醒對象</h2>
+          <p>返回選擇畫面後，可切換到另一位已綁定的 LINE 收件人；每位收件人的提醒會各自分開。</p>
+          <button className="settings-action" type="button" onClick={lockApp} disabled={locking}>{locking ? "切換中…" : "選擇其他收件人"}</button>
         </article>
         <article className="settings-card">
           <p className="eyebrow">CONNECT LINE</p>
