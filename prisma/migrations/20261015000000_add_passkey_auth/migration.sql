@@ -1,0 +1,4 @@
+-- Historical compatibility marker.
+-- This migration was applied to the production database during the earlier
+-- Passkey experiment. Its tables are safely handled by the subsequent
+-- management-password migration, so no schema operation is required here.

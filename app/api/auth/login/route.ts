@@ -4,22 +4,20 @@ import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 
-const OWNER_ID = "owner";
-
 export async function POST(request: Request) {
   try {
-    const { password } = (await request.json()) as { password?: unknown };
-    if (typeof password !== "string") {
-      return NextResponse.json({ error: "請輸入管理密碼。" }, { status: 400 });
+    const { username, password } = (await request.json()) as { username?: unknown; password?: unknown };
+    if (typeof username !== "string" || typeof password !== "string") {
+      return NextResponse.json({ error: "請輸入帳號與密碼。" }, { status: 400 });
     }
 
-    const owner = await prisma.appUser.findUnique({ where: { id: OWNER_ID } });
-    if (!owner?.passwordHash || !verifyPassword(password, owner.passwordHash)) {
-      return NextResponse.json({ error: "管理密碼不正確。" }, { status: 401 });
+    const user = await prisma.appUser.findUnique({ where: { username: username.trim() } });
+    if (!user?.passwordHash || !verifyPassword(password, user.passwordHash)) {
+      return NextResponse.json({ error: "帳號或密碼不正確。" }, { status: 401 });
     }
 
-    const token = await createSession(OWNER_ID);
-    const response = NextResponse.json({ ok: true });
+    const token = await createSession(user.id);
+    const response = NextResponse.json({ ok: true, username: user.username });
     setSessionCookie(response, token);
     return response;
   } catch (error) {

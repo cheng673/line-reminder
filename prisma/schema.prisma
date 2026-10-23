@@ -25,28 +25,50 @@ model Reminder {
   processingAt DateTime?    @map("processing_at")
   sentAt     DateTime?      @map("sent_at")
   error      String?        @db.Text
+  userId     String         @map("user_id")
+  user       AppUser        @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([status, scheduledAt])
+  @@index([userId, scheduledAt])
   @@map("reminders")
 }
 
 model LineRecipient {
-  lineUserId  String   @id @map("line_user_id")
+  lineUserId  String   @map("line_user_id")
   displayName String   @default("我的 LINE") @map("display_name")
   isActive    Boolean  @default(true) @map("is_active")
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
+  userId      String   @map("user_id")
+  user        AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  @@id([userId, lineUserId])
   @@map("line_recipients")
 }
 
 model AppUser {
   id           String        @id
+  username     String        @unique
   passwordHash String?       @map("password_hash")
   createdAt    DateTime      @default(now()) @map("created_at")
   sessions     UserSession[]
+  reminders    Reminder[]
+  recipients   LineRecipient[]
+  lineLinkTokens LineLinkToken[]
 
   @@map("app_users")
+}
+
+model LineLinkToken {
+  tokenHash String   @id @map("token_hash")
+  userId    String   @map("user_id")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  user      AppUser  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("line_link_tokens")
 }
 
 model UserSession {

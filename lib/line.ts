@@ -1,8 +1,14 @@
+import { createHash } from "crypto";
+
 const LINE_PUSH_ENDPOINT = "https://api.line.me/v2/bot/message/push";
 const LINE_PROFILE_ENDPOINT = "https://api.line.me/v2/bot/profile";
 
 export function isLineConfigured() {
   return Boolean(process.env.LINE_CHANNEL_ACCESS_TOKEN);
+}
+
+export function hashLineLinkToken(token: string) {
+  return createHash("sha256").update(token, "utf8").digest("hex");
 }
 
 export async function getLineDisplayName(lineUserId: string) {

@@ -89,7 +89,7 @@ export function ReminderDashboard() {
     }
     const selectedRecipient = recipients.find((item) => item.lineUserId === recipient);
     if (!selectedRecipient) {
-      setNotice("請先把 LINE 官方帳號加為好友，讓系統註冊你的收件人資料。");
+      setNotice("請先到「設定」產生 LINE 綁定碼，並傳送給 LINE 官方帳號。");
       return;
     }
 
@@ -207,7 +207,7 @@ export function ReminderDashboard() {
                 <option key={item.lineUserId} value={item.lineUserId}>{item.displayName}</option>
               ))}
             </select>
-            <small>加為官方帳號好友後，系統會自動列出你的 LINE。</small>
+            <small>請在「設定」使用 LINE 綁定碼連結屬於這個帳號的收件人。</small>
           </label>
 
           {(notice || loadingError) && <p className="notice" role="status">{notice || loadingError}</p>}

@@ -15,6 +15,8 @@ async function readJson<T>(response: Response): Promise<T> {
 export function UnlockScreen({ setupMode }: UnlockScreenProps) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+  const [registerMode, setRegisterMode] = useState(setupMode);
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -22,12 +24,12 @@ export function UnlockScreen({ setupMode }: UnlockScreenProps) {
     setBusy(true);
     setMessage("");
     try {
-      if (setupMode) {
+      if (registerMode) {
         await readJson(
-          await fetch("/api/auth/setup", {
+          await fetch(setupMode ? "/api/auth/setup" : "/api/auth/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password, confirmPassword }),
+            body: JSON.stringify({ username, password, confirmPassword }),
           }),
         );
       } else {
@@ -35,22 +37,29 @@ export function UnlockScreen({ setupMode }: UnlockScreenProps) {
           await fetch("/api/auth/login", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password }),
+            body: JSON.stringify({ username, password }),
           }),
         );
       }
       window.location.assign("/");
     } catch (error) {
-      const fallback = setupMode ? "管理密碼尚未設定，請再試一次。" : "無法解鎖，請再試一次。";
+      const fallback = registerMode ? "無法建立帳號，請再試一次。" : "無法登入，請再試一次。";
       setMessage(error instanceof Error ? error.message : fallback);
       setBusy(false);
     }
   }
 
-  const title = setupMode ? "設定管理密碼。" : "回來了。";
-  const description = setupMode
-    ? "建立一組只屬於這個網站的管理密碼。之後無論使用哪個裝置，都用它解鎖提醒。"
-    : "輸入管理密碼，即可安全查看與管理你的 LINE 提醒。";
+  const title = registerMode ? "建立你的空間。" : "歡迎回來。";
+  const description = registerMode
+    ? "建立帳號與密碼。登入後，你只能查看與管理自己的提醒和 LINE 收件人。"
+    : "輸入帳號與密碼，即可安全查看屬於你的 LINE 提醒。";
+
+  function switchMode() {
+    setRegisterMode((current) => !current);
+    setMessage("");
+    setPassword("");
+    setConfirmPassword("");
+  }
 
   return (
     <main className="auth-page">
@@ -76,19 +85,30 @@ export function UnlockScreen({ setupMode }: UnlockScreenProps) {
 
         <div className="auth-fields">
           <label className="auth-field">
-            <span>管理密碼</span>
+            <span>帳號</span>
+            <input
+              type="text"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="例如：cheng"
+              autoComplete="username"
+              disabled={busy}
+            />
+          </label>
+          <label className="auth-field">
+            <span>密碼</span>
             <input
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder={setupMode ? "至少 12 個字元" : "輸入管理密碼"}
-              autoComplete={setupMode ? "new-password" : "current-password"}
+              placeholder={registerMode ? "至少 12 個字元" : "輸入密碼"}
+              autoComplete={registerMode ? "new-password" : "current-password"}
               disabled={busy}
             />
           </label>
-          {setupMode && (
+          {registerMode && (
             <label className="auth-field">
-              <span>再次確認密碼</span>
+              <span>再次確認</span>
               <input
                 type="password"
                 value={confirmPassword}
@@ -102,15 +122,20 @@ export function UnlockScreen({ setupMode }: UnlockScreenProps) {
         </div>
         <button className="auth-button" type="button" onClick={unlock} disabled={busy}>
           <span className="auth-button-icon" aria-hidden="true">↗</span>
-          {busy ? "正在確認…" : setupMode ? "儲存並解鎖提醒" : "解鎖提醒"}
+          {busy ? "正在確認…" : registerMode ? "建立帳號並進入" : "登入提醒"}
         </button>
         {message && <p className="auth-error" role="alert">{message}</p>}
 
         <p className="auth-note">
-          {setupMode ? "密碼只會以不可逆雜湊方式保存。" : "忘記密碼時，需要由管理者重新設定。"}
+          {registerMode ? "密碼只會以不可逆雜湊方式保存。" : "忘記密碼時，請建立新的帳號。"}
         </p>
+        {!setupMode && (
+          <button className="auth-switch" type="button" onClick={switchMode} disabled={busy}>
+            {registerMode ? "已有帳號？改為登入" : "第一次使用？建立新帳號"}
+          </button>
+        )}
       </section>
-      <p className="auth-footer">你的提醒，只對知道管理密碼的人開放。</p>
+      <p className="auth-footer">你的提醒，只會顯示在自己的帳號內。</p>
     </main>
   );
 }

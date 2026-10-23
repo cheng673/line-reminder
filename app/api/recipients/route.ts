@@ -7,9 +7,10 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    if (!(await getCurrentUser())) return NextResponse.json({ error: "請先解鎖提醒。" }, { status: 401 });
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "請先登入。" }, { status: 401 });
     const recipients = await prisma.lineRecipient.findMany({
-      where: { isActive: true },
+      where: { userId: user.id, isActive: true },
       orderBy: { createdAt: "asc" },
       select: { lineUserId: true, displayName: true },
     });
@@ -25,7 +26,7 @@ export async function GET() {
         if (!displayName) return recipient;
 
         await prisma.lineRecipient.update({
-          where: { lineUserId: recipient.lineUserId },
+          where: { userId_lineUserId: { userId: user.id, lineUserId: recipient.lineUserId } },
           data: { displayName },
         });
         return { ...recipient, displayName };

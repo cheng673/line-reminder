@@ -7,8 +7,12 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
-    if (!(await getCurrentUser())) return NextResponse.json({ error: "請先解鎖提醒。" }, { status: 401 });
-    const reminders = await prisma.reminder.findMany({ orderBy: { scheduledAt: "asc" } });
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "請先登入。" }, { status: 401 });
+    const reminders = await prisma.reminder.findMany({
+      where: { userId: user.id },
+      orderBy: { scheduledAt: "asc" },
+    });
     return NextResponse.json(reminders.map(serializeReminder));
   } catch (error) {
     console.error("Unable to list reminders", error);
@@ -18,14 +22,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    if (!(await getCurrentUser())) return NextResponse.json({ error: "請先解鎖提醒。" }, { status: 401 });
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: "請先登入。" }, { status: 401 });
     const result = validateReminderPayload(await request.json());
     if ("error" in result) return NextResponse.json(result, { status: 400 });
 
     const recipient = result.data.lineUserId
-      ? await prisma.lineRecipient.findFirst({ where: { lineUserId: result.data.lineUserId, isActive: true } })
+      ? await prisma.lineRecipient.findUnique({
+        where: { userId_lineUserId: { userId: user.id, lineUserId: result.data.lineUserId } },
+      })
       : null;
-    if (result.data.lineUserId && !recipient) {
+    if (result.data.lineUserId && (!recipient || !recipient.isActive)) {
       return NextResponse.json({ error: "這位 LINE 收件人尚未註冊或已解除連結。" }, { status: 400 });
     }
 
@@ -38,6 +45,7 @@ export async function POST(request: Request) {
         scheduledAt: new Date(result.data.scheduledAt),
         recipientName: recipient?.displayName || result.data.recipientName,
         lineUserId,
+        userId: user.id,
       },
     });
     return NextResponse.json(serializeReminder(reminder), { status: 201 });

@@ -7,6 +7,8 @@ const SESSION_COOKIE = "line_reminder_session";
 const SESSION_DURATION_SECONDS = 60 * 60 * 24 * 30;
 const PASSWORD_MIN_LENGTH = 12;
 const PASSWORD_MAX_LENGTH = 128;
+const USERNAME_MIN_LENGTH = 3;
+const USERNAME_MAX_LENGTH = 30;
 
 function hashToken(token: string) {
   return createHash("sha256").update(token).digest("hex");
@@ -16,6 +18,18 @@ export function validatePassword(password: unknown) {
   if (typeof password !== "string") return "請輸入管理密碼。";
   if (password.length < PASSWORD_MIN_LENGTH) return `管理密碼至少需要 ${PASSWORD_MIN_LENGTH} 個字元。`;
   if (password.length > PASSWORD_MAX_LENGTH) return `管理密碼不能超過 ${PASSWORD_MAX_LENGTH} 個字元。`;
+  return null;
+}
+
+export function validateUsername(username: unknown) {
+  if (typeof username !== "string") return "請輸入帳號。";
+  const value = username.trim();
+  if (value.length < USERNAME_MIN_LENGTH || value.length > USERNAME_MAX_LENGTH) {
+    return `帳號需為 ${USERNAME_MIN_LENGTH} 至 ${USERNAME_MAX_LENGTH} 個字元。`;
+  }
+  if (!/^[\p{L}\p{N}_-]+$/u.test(value)) {
+    return "帳號只能使用中英文、數字、底線或連字號。";
+  }
   return null;
 }
 
