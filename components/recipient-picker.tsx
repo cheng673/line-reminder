@@ -47,18 +47,18 @@ export function RecipientPicker() {
   }
 
   return (
-    <main className="auth-page">
-      <div className="auth-glow auth-glow-one" />
-      <div className="auth-glow auth-glow-two" />
-      <section className="auth-panel" aria-labelledby="recipient-picker-title">
-        <a className="auth-brand" href="/" aria-label="提醒一下首頁"><span className="auth-brand-mark">·</span><span>提醒一下</span></a>
-        <div className="auth-lock" aria-hidden="true">
+    <main className="recipient-picker-page">
+      <div className="recipient-picker-orb recipient-picker-orb-one" />
+      <div className="recipient-picker-orb recipient-picker-orb-two" />
+      <section className="recipient-picker-panel" aria-labelledby="recipient-picker-title">
+        <a className="recipient-picker-brand" href="/" aria-label="提醒一下首頁"><span className="recipient-picker-brand-mark">·</span><span>提醒一下</span></a>
+        <div className="recipient-picker-avatar" aria-hidden="true">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"><circle cx="12" cy="8" r="3" /><path d="M5 20c.8-4 3.1-6 7-6s6.2 2 7 6" /></svg>
         </div>
-        <p className="auth-kicker">LINE REMINDER</p>
+        <p className="recipient-picker-kicker">LINE REMINDER</p>
         <h1 id="recipient-picker-title">選擇提醒對象。</h1>
-        <p className="auth-copy">選擇已綁定的 LINE 名稱，再輸入這位使用者專屬的密碼即可進入。</p>
-        <label className="auth-field recipient-choice">
+        <p className="recipient-picker-copy">選擇已綁定的 LINE 名稱，再輸入這位使用者專屬的密碼即可進入。</p>
+        <label className="recipient-picker-field recipient-picker-choice">
           <span>已綁定的 LINE 收件人</span>
           <select value={selected} onChange={(event) => setSelected(event.target.value)} disabled={loading || busy || !recipients.length}>
             {loading && <option>讀取中…</option>}
@@ -67,8 +67,8 @@ export function RecipientPicker() {
           </select>
         </label>
         {choice && (
-          <div className="auth-fields recipient-password-fields">
-            <label className="auth-field">
+          <div className="recipient-picker-passwords">
+            <label className="recipient-picker-field">
               <span>{choice.passwordConfigured ? "密碼" : "設定密碼"}</span>
               <input
                 type="password"
@@ -80,7 +80,7 @@ export function RecipientPicker() {
               />
             </label>
             {!choice.passwordConfigured && (
-              <label className="auth-field">
+              <label className="recipient-picker-field">
                 <span>再次確認密碼</span>
                 <input
                   type="password"
@@ -94,13 +94,13 @@ export function RecipientPicker() {
             )}
           </div>
         )}
-        <button className="auth-button" type="button" onClick={enter} disabled={loading || busy || !selected}>
-          <span className="auth-button-icon" aria-hidden="true">↗</span>{busy ? "確認中…" : choice?.passwordConfigured ? "輸入密碼並進入" : "設定密碼並進入"}
+        <button className="recipient-picker-button" type="button" onClick={enter} disabled={loading || busy || !selected}>
+          <span className="recipient-picker-button-icon" aria-hidden="true">↗</span>{busy ? "確認中…" : choice?.passwordConfigured ? "輸入密碼並進入" : "設定密碼並進入"}
         </button>
-        {message && <p className="auth-error" role="alert">{message}</p>}
-        <p className="auth-note">每位 LINE 收件人都有獨立密碼；進入後，新提醒會自動發送給這位收件人。</p>
+        {message && <p className="recipient-picker-error" role="alert">{message}</p>}
+        <p className="recipient-picker-note">每位 LINE 收件人都有獨立密碼；進入後，新提醒會自動發送給這位收件人。</p>
       </section>
-      <p className="auth-footer">切換收件人，即可切換各自的提醒空間。</p>
+      <p className="recipient-picker-footer">切換收件人，即可切換各自的提醒空間。</p>
     </main>
   );
 }
