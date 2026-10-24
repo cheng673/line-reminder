@@ -82,6 +82,7 @@ export function SettingsPage() {
           {!isLoading && !error && recipients.length === 0 && <p className="empty">尚未連結 LINE。產生綁定碼後，傳送到 LINE 官方帳號即可完成連結。</p>}
         </article>
       </section>
+      <p className="settings-version">目前版本 · V2.4.0</p>
     </main>
   );
 }

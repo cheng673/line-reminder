@@ -3,6 +3,7 @@ import { Prisma } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { isLineConfigured, sendLineReminder } from "@/lib/line";
 import { prisma } from "@/lib/prisma";
+import { nextScheduledRun } from "@/lib/schedules";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -88,5 +89,45 @@ export async function POST(request: Request) {
     }
   }
 
-  return NextResponse.json({ claimed: claimed.length, sent, failed, recovered: recovered.count, expiredDeleted: expired.count });
+  const dueSchedules = await prisma.scheduledReminder.findMany({
+    where: { isActive: true, nextRunAt: { lte: new Date() } },
+    orderBy: { nextRunAt: "asc" },
+    take: BATCH_SIZE,
+  });
+  let scheduledSent = 0;
+  let scheduledFailed = 0;
+  for (const schedule of dueSchedules) {
+    try {
+      await sendLineReminder(schedule.lineUserId, schedule.message);
+      await prisma.scheduledReminder.update({
+        where: { id: schedule.id },
+        data: {
+          lastSentAt: new Date(),
+          nextRunAt: nextScheduledRun({
+            frequency: schedule.frequency,
+            weekdays: schedule.weekdays,
+            timeOfDay: schedule.timeOfDay,
+          }),
+          error: null,
+        },
+      });
+      scheduledSent += 1;
+    } catch (error) {
+      const message = error instanceof Error ? error.message.slice(0, 1000) : "未知的 LINE 發送錯誤。";
+      await prisma.scheduledReminder.update({ where: { id: schedule.id }, data: { error: message } });
+      scheduledFailed += 1;
+      console.error(`Unable to send scheduled reminder ${schedule.id}`, error);
+    }
+  }
+
+  return NextResponse.json({
+    claimed: claimed.length,
+    sent,
+    failed,
+    scheduledClaimed: dueSchedules.length,
+    scheduledSent,
+    scheduledFailed,
+    recovered: recovered.count,
+    expiredDeleted: expired.count,
+  });
 }

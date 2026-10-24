@@ -7,13 +7,13 @@ import { useEffect, useRef, useState } from "react";
 type NavigationItem = {
   href: string;
   label: string;
-  icon: "home" | "list" | "bell" | "settings";
+  icon: "home" | "list" | "schedule" | "settings";
 };
 
 const items: NavigationItem[] = [
   { href: "/", label: "首頁", icon: "home" },
   { href: "/all-reminders", label: "所有提醒", icon: "list" },
-  { href: "/my-reminders", label: "我的提醒", icon: "bell" },
+  { href: "/scheduled-reminders", label: "排程提醒", icon: "schedule" },
   { href: "/settings", label: "設定", icon: "settings" },
 ];
 
@@ -24,8 +24,8 @@ function NavigationIcon({ name }: { name: NavigationItem["icon"] }) {
   if (name === "list") {
     return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11" /><path d="M4 6h.01M4 12h.01M4 18h.01" strokeWidth="3.5" strokeLinecap="round" /></svg>;
   }
-  if (name === "bell") {
-    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  if (name === "schedule") {
+    return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="3" /><path d="M7.5 3.5v4M16.5 3.5v4M3.5 10h17M12 13v4l2.5 1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>;
   }
   return <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M12 15.25A3.25 3.25 0 1 0 12 8.75a3.25 3.25 0 0 0 0 6.5Z" /><path d="m19.2 13.45 1.2.7-1.7 2.95-1.2-.7a7.82 7.82 0 0 1-1.7 1l.02 1.38h-3.4l.02-1.38a7.82 7.82 0 0 1-1.7-1l-1.2.7-1.7-2.95 1.2-.7a7.4 7.4 0 0 1 0-1.96l-1.2-.7 1.7-2.95 1.2.7a7.82 7.82 0 0 1 1.7-1L12.42 6h3.4l-.02 1.39a7.82 7.82 0 0 1 1.7 1l1.2-.7 1.7 2.95-1.2.7a7.4 7.4 0 0 1 0 1.96Z" strokeLinejoin="round" /></svg>;
 }

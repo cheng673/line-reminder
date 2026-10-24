@@ -26,6 +26,13 @@ function taipeiTodayLabel() {
   }).format(new Date());
 }
 
+function taipeiGreeting() {
+  const hour = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Taipei", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+  if (hour < 12) return "早安";
+  if (hour < 18) return "午安";
+  return "晚安";
+}
+
 function dateTimeParts(value: string) {
   const date = new Date(value);
   return {
@@ -148,6 +155,7 @@ export function ReminderDashboard() {
           <span>提醒一下</span>
         </a>
         <div className="topbar-actions">
+          <span className="greeting">{taipeiGreeting()}，{recipients[0]?.displayName || "你"}</span>
           <span className="phase-chip">今天 · {taipeiTodayLabel()}</span>
           <button className="lock-button" type="button" onClick={lockApp} disabled={isSwitchingRecipient}>
             {isSwitchingRecipient ? "切換中…" : "切換對象"}
@@ -168,6 +176,7 @@ export function ReminderDashboard() {
               <p className="eyebrow">NEW REMINDER</p>
               <h2>{editingId ? "編輯提醒" : "建立提醒"}</h2>
             </div>
+            <Link className="text-button schedule-entry" href="/scheduled-reminders">排程提醒 ↗</Link>
             {editingId && (
               <button type="button" className="text-button" onClick={clearForm} disabled={isSaving}>取消編輯</button>
             )}

@@ -14,6 +14,11 @@ enum ReminderStatus {
   FAILED
 }
 
+enum ScheduleFrequency {
+  DAILY
+  WEEKLY
+}
+
 model Reminder {
   id         String         @id @default(cuid())
   message    String         @db.VarChar(500)
@@ -56,8 +61,31 @@ model AppUser {
   reminders    Reminder[]
   recipients   LineRecipient[]
   lineLinkTokens LineLinkToken[]
+  scheduledReminders ScheduledReminder[]
 
   @@map("app_users")
+}
+
+model ScheduledReminder {
+  id            String            @id @default(cuid())
+  message       String            @db.VarChar(500)
+  frequency     ScheduleFrequency
+  weekdays      Int[]             @default([])
+  timeOfDay     String            @map("time_of_day") @db.VarChar(5)
+  nextRunAt     DateTime          @map("next_run_at")
+  lastSentAt    DateTime?         @map("last_sent_at")
+  isActive      Boolean           @default(true) @map("is_active")
+  error         String?           @db.Text
+  createdAt     DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
+  userId        String            @map("user_id")
+  lineUserId    String            @map("line_user_id")
+  recipientName String            @map("recipient_name")
+  user          AppUser           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([isActive, nextRunAt])
+  @@index([userId, lineUserId])
+  @@map("scheduled_reminders")
 }
 
 model LineLinkToken {
