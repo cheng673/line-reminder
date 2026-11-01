@@ -6,10 +6,17 @@ import type { Recipient, Reminder } from "@/lib/types";
 type ReminderDataValue = {
   reminders: Reminder[];
   recipients: Recipient[];
+  activeScheduleCount: number;
   isLoading: boolean;
   error: string;
   setReminders: React.Dispatch<React.SetStateAction<Reminder[]>>;
   refresh: () => Promise<void>;
+};
+
+type AppData = {
+  reminders: Reminder[];
+  recipients: Recipient[];
+  activeScheduleCount: number;
 };
 
 const ReminderDataContext = createContext<ReminderDataValue | null>(null);
@@ -24,6 +31,7 @@ async function readJson<T>(url: string): Promise<T> {
 export function ReminderDataProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [recipients, setRecipients] = useState<Recipient[]>([]);
+  const [activeScheduleCount, setActiveScheduleCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -31,12 +39,10 @@ export function ReminderDataProvider({ children }: Readonly<{ children: React.Re
     setIsLoading(true);
     setError("");
     try {
-      const [nextReminders, nextRecipients] = await Promise.all([
-        readJson<Reminder[]>("/api/reminders"),
-        readJson<Recipient[]>("/api/recipients"),
-      ]);
-      setReminders(nextReminders);
-      setRecipients(nextRecipients);
+      const data = await readJson<AppData>("/api/app-data");
+      setReminders(data.reminders);
+      setRecipients(data.recipients);
+      setActiveScheduleCount(data.activeScheduleCount);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "暫時無法讀取提醒資料。");
     } finally {
@@ -46,7 +52,7 @@ export function ReminderDataProvider({ children }: Readonly<{ children: React.Re
 
   useEffect(() => { void refresh(); }, [refresh]);
 
-  const value = useMemo(() => ({ reminders, recipients, isLoading, error, setReminders, refresh }), [reminders, recipients, isLoading, error, refresh]);
+  const value = useMemo(() => ({ reminders, recipients, activeScheduleCount, isLoading, error, setReminders, refresh }), [reminders, recipients, activeScheduleCount, isLoading, error, refresh]);
   return <ReminderDataContext.Provider value={value}>{children}</ReminderDataContext.Provider>;
 }
 

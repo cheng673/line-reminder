@@ -31,20 +31,15 @@ export function ReminderListPage({ mode }: ReminderListPageProps) {
   );
 
   return (
-    <main className="shell subpage-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="回到提醒一下首頁">
-          <span className="brand-mark">✓</span>
-          <span>提醒一下</span>
-        </a>
-        <span className="phase-chip">{displayedReminders.length} 筆提醒</span>
+    <main className="app-shell reminder-list-page">
+      <header className="app-header">
+        <div>
+          <p className="app-kicker">{isAll ? "ALL REMINDERS" : "MY REMINDERS"}</p>
+          <h1>{isAll ? "所有提醒" : "我的提醒"}</h1>
+          <p>{isAll ? "完整保留每一筆提醒的發送狀態與時間。" : "依目前規則整理尚待處理、發送中與需要留意的提醒。"}</p>
+        </div>
+        <span className="profile-orb" aria-label={`${displayedReminders.length} 筆提醒`}>{displayedReminders.length}</span>
       </header>
-
-      <section className="subpage-hero">
-        <p className="eyebrow">{isAll ? "EVERYTHING" : "FOR YOU"}</p>
-        <h1>{isAll ? "所有提醒" : "我的提醒"}</h1>
-        <p>{isAll ? "完整保留每一筆提醒的發送狀態與時間。" : "依目前規則整理尚待處理、發送中與需要留意的提醒。"}</p>
-      </section>
 
       <section className="list-card reminder-collection" aria-live="polite">
         {isLoading && <p className="empty">正在讀取提醒…</p>}

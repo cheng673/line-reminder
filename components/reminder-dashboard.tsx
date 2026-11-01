@@ -66,13 +66,21 @@ export function ReminderDashboard() {
   const [notice, setNotice] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isSwitchingRecipient, setIsSwitchingRecipient] = useState(false);
-  const { reminders, recipients, isLoading, error: loadingError, setReminders } = useReminderData();
+  const [filter, setFilter] = useState<"all" | "today" | "todo" | "done">("all");
+  const { reminders, recipients, activeScheduleCount, isLoading, error: loadingError, setReminders } = useReminderData();
 
   const pendingCount = useMemo(
     () => reminders.filter((reminder) => reminder.status === "pending").length,
     [reminders],
   );
-  const recentReminders = useMemo(() => reminders.slice(0, 5), [reminders]);
+  const visibleReminders = useMemo(() => {
+    const today = taipeiToday();
+    if (filter === "today") return reminders.filter((reminder) => inputDateTime(reminder.scheduledAt).date === today);
+    if (filter === "todo") return reminders.filter((reminder) => ["pending", "processing", "failed"].includes(reminder.status));
+    if (filter === "done") return reminders.filter((reminder) => reminder.status === "sent");
+    return reminders;
+  }, [filter, reminders]);
+  const recentReminders = useMemo(() => visibleReminders.slice(0, 5), [visibleReminders]);
 
   function clearForm() {
     setMessage("");
@@ -127,6 +135,7 @@ export function ReminderDashboard() {
   }
 
   async function deleteReminder(id: string) {
+    if (!window.confirm("確定要刪除這項提醒嗎？刪除後將不會發送 LINE 通知。")) return;
     try {
       await requestJson<void>(`/api/reminders/${id}`, { method: "DELETE" });
       setReminders((current) => current.filter((reminder) => reminder.id !== id));
@@ -148,26 +157,18 @@ export function ReminderDashboard() {
   }
 
   return (
-    <main className="shell">
-      <header className="topbar">
-        <a className="brand" href="#top" aria-label="提醒一下首頁">
-          <span className="brand-mark">✓</span>
-          <span>提醒一下</span>
-        </a>
-        <div className="topbar-actions">
-          <span className="greeting">{taipeiGreeting()}，{recipients[0]?.displayName || "你"}</span>
-          <span className="phase-chip">今天 · {taipeiTodayLabel()}</span>
-          <button className="lock-button" type="button" onClick={lockApp} disabled={isSwitchingRecipient}>
-            {isSwitchingRecipient ? "切換中…" : "切換對象"}
-          </button>
-        </div>
+    <main className="app-shell dashboard-shell">
+      <header className="dashboard-header" id="top">
+        <div><p className="app-kicker">{taipeiTodayLabel()}</p><h1>{taipeiGreeting()}，{recipients[0]?.displayName || "你"}</h1><p>今天也一起完成重要的事吧。</p></div>
+        <button className="app-lock-button" type="button" onClick={lockApp} disabled={isSwitchingRecipient} aria-label="鎖定並切換提醒對象">
+          {isSwitchingRecipient ? "…" : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" aria-hidden="true"><rect x="5.5" y="10.25" width="13" height="10" rx="2.4" /><path d="M8.5 10.25V7.5a3.5 3.5 0 0 1 7 0v2.75M12 14.25v2" strokeLinecap="round" /></svg>}
+        </button>
       </header>
 
-      <section className="hero" id="top">
-        <p className="eyebrow">LINE REMINDER</p>
-        <h1>把重要的事，<br /><em>準時提醒自己。</em></h1>
-        <p className="hero-copy">設定一次提醒；正式串接後，時間一到就由系統透過 LINE 傳送給你。</p>
-      </section>
+      <section className="dashboard-summary" aria-label="提醒摘要"><div><span>待處理</span><strong>{pendingCount}</strong><small>項提醒</small></div><Link href="/scheduled-reminders"><span>排程中</span><strong>{activeScheduleCount}</strong><small>個進行中 · 管理排程</small></Link></section>
+      <div className="reminder-filters" role="tablist" aria-label="篩選提醒">
+        {([ ["all", "全部"], ["today", "今日"], ["todo", "待辦"], ["done", "已完成"] ] as const).map(([value, label]) => <button key={value} type="button" className={filter === value ? "is-selected" : ""} onClick={() => setFilter(value)} role="tab" aria-selected={filter === value}>{label}</button>)}
+      </div>
 
       <section className="dashboard" aria-label="提醒管理">
         <form className="create-card" onSubmit={handleSubmit}>
@@ -238,16 +239,13 @@ export function ReminderDashboard() {
                 </article>
               );
             })}
-            {!isLoading && reminders.length === 0 && <p className="empty">目前沒有提醒。建立第一個提醒吧！</p>}
-            {!isLoading && reminders.length > recentReminders.length && <Link className="view-all-link" href="/all-reminders">查看全部提醒</Link>}
+            {!isLoading && visibleReminders.length === 0 && <p className="empty">目前沒有符合條件的提醒。</p>}
+            {!isLoading && visibleReminders.length > recentReminders.length && <Link className="view-all-link" href="/all-reminders">查看全部提醒</Link>}
           </div>
         </section>
       </section>
 
-      <footer>
-        <span>提醒一下 · 先把重要的事準時送達</span>
-        <span>Phase 1：UI 原型</span>
-      </footer>
+      <footer><span>提醒一下</span><span>重要的事，讓我幫你記得</span></footer>
     </main>
   );
 }

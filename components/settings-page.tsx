@@ -33,15 +33,14 @@ export function SettingsPage() {
   }
 
   return (
-    <main className="shell subpage-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="回到提醒一下首頁"><span className="brand-mark">✓</span><span>提醒一下</span></a>
-      </header>
-      <section className="subpage-hero">
+    <main className="app-shell settings-page">
+      <header className="app-header">
+        <div>
         <p className="eyebrow">SETTINGS</p>
         <h1>設定</h1>
         <p>管理目前已連結的 LINE 收件人與本次登入狀態。</p>
-      </section>
+        </div>
+      </header>
 
       <section className="settings-stack" aria-label="設定內容">
         <article className="settings-card">

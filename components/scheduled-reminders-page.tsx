@@ -84,6 +84,7 @@ export function ScheduledRemindersPage() {
   }
 
   async function deleteSchedule(id: string) {
+    if (!window.confirm("確定要刪除這項排程提醒嗎？")) return;
     try {
       await requestJson<void>(`/api/scheduled-reminders/${id}`, { method: "DELETE" });
       setSchedules((current) => current.filter((item) => item.id !== id));
@@ -93,16 +94,15 @@ export function ScheduledRemindersPage() {
   }
 
   return (
-    <main className="shell subpage-shell">
-      <header className="topbar">
-        <a className="brand" href="/" aria-label="回到提醒一下首頁"><span className="brand-mark">✓</span><span>提醒一下</span></a>
-        <Link className="lock-button" href="/">單次提醒</Link>
+    <main className="app-shell schedule-page">
+      <header className="app-header">
+        <div>
+          <p className="app-kicker">RECURRING SCHEDULE</p>
+          <h1>排程提醒</h1>
+          <p>設定固定時段，讓系統每天或每週自動透過 LINE 提醒你。</p>
+        </div>
+        <Link className="round-icon-button" href="/new-reminder" aria-label="新增單次提醒">＋</Link>
       </header>
-      <section className="subpage-hero">
-        <p className="eyebrow">RECURRING SCHEDULE</p>
-        <h1>排程提醒</h1>
-        <p>設定固定時段，讓系統每天或每週自動透過 LINE 提醒你。</p>
-      </section>
       <section className="scheduled-layout">
         <form className="create-card" onSubmit={createSchedule}>
           <div className="section-heading"><div><p className="eyebrow">NEW SCHEDULE</p><h2>建立排程</h2></div></div>
